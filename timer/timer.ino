@@ -10,7 +10,7 @@
 #include "GyverEncoder.h"                                    // https://github.com/AlexGyver/GyverLibs/releases/download/GyverEncoder/GyverEncoder.zip
 #include <iarduino_OLED_txt.h>                               // https://github.com/tremaru/iarduino_OLED_txt/archive/1.1.0.zip
 
-iarduino_OLED_txt myOLED(0x3C);                              // Объявляем объект myOLED, указывая адрес дисплея на шине I2C: 0x3C или 0x3D.
+iarduino_OLED_txt myOLED(0x3C);                              // myOLED with display address on I2C: 0x3C or 0x3D.
                                                            
 extern uint8_t MediumFontRus[];                              // display font
 
@@ -26,9 +26,9 @@ uint32_t last_check_millis;
 
 
 enum {
-  SHOW_TIMER, // режим показа таймера
+  SHOW_TIMER, // show timer mode
   SHOW_MENU,
-  AUTH, // режим аутентификации
+  AUTH,       // auth mode (waits for password)
   SET_PASSW,
   SET_ON_TIME,
   SET_BEEP_TIME,
@@ -42,19 +42,19 @@ uint8_t pasw_char_val;
 uint8_t inp_passw[4]; 
 
 void beep(){
-   tone(BEEP, 1000, 200); // Запустили звучание
+   tone(BEEP, 1000, 200); // beeps on timer expiration
    beeping = true;
    //Serial.println("beep!");
 }
 
 void beep_err(){
-   tone(BEEP, 300, 200); // Запустили звучание
+   tone(BEEP, 300, 200); // beeps on error for 200 ms
    delay(200);
-   noTone(BEEP); // Остановили звучание
+   noTone(BEEP);
 }
 
 void no_beep(){
-   noTone(BEEP); // Остановили звучание
+   noTone(BEEP); // stops beeping
    beeping = false;
    //Serial.println("no beep");
 }
@@ -62,14 +62,19 @@ void no_beep(){
 
 void setup() {
   //Serial.begin(9600);
-  myOLED.begin();                                          // Инициируем работу с дисплеем.
-  myOLED.setFont(MediumFontRus);                           // Указываем шрифт который требуется использовать для вывода цифр и текста.
+  myOLED.begin();                                          // Display init
+  myOLED.setFont(MediumFontRus);                           // select medium sized font (russian here)
+
+
+  //init encoder
+  attachInterrupt(0, enc_check, CHANGE);  
+  attachInterrupt(1, enc_check, CHANGE);
+  enc.setType(TYPE2);
+
+  //init relay
+  pinMode(RELAY, OUTPUT);
 
   
-  attachInterrupt(0, enc_check, CHANGE);    // прерывание на 2 пине! CLK у энка
-  attachInterrupt(1, enc_check, CHANGE);     // прерывание на 3 пине! DT у энка
-  enc.setType(TYPE2);
-  pinMode(RELAY, OUTPUT);
   turn_off();
 }
 
@@ -153,15 +158,13 @@ void restart(){
   for (uint8_t i = 0; i < 4; i++) inp_passw[i] = 255;
   }
 
-void enc_check(){
-  // отработка в прерывании  
+void enc_check(){ 
   enc.tick();
 }
-void enc_action(){
-  // отработка в прерывании  
+void enc_action(){  
   enc.tick();
   if(enc.isClick()) isrCLK();
-  else{ // если был поворот
+  else{ // if was rotation
       if (enc.isRight() || enc.isRightH()) {
         isrDT(false);        
       }
