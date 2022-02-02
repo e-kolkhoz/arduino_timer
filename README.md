@@ -12,6 +12,6 @@ https://github.com/tremaru/iarduino_OLED_txt/archive/1.1.0.zip
 
 * 0.96 128X64 OLED I2C
 
-* Encoder KY-040 (module or )
+* Encoder KY-040
 
 * 1 Channel DC 5V 220V 5A SSR Solid State Relay Module Low Level Trigger
